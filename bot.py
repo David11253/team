@@ -1,6 +1,6 @@
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackContext, CallbackQueryHandler
+import telebot
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from flask import Flask, render_template, request
 import logging
 
@@ -10,21 +10,17 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Токен для бота и ID группы
-TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Замените на ваш токен
-GROUP_ID = '-1002428849357'  # ID или username вашей группы
+TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Твой токен
+bot = telebot.TeleBot(TOKEN)
+
+# ID твоей группы в Telegram
+GROUP_ID = '-1002428849357'  # ID твоей группы
 
 # Создаем Flask приложение
 app = Flask(__name__)
 
-# Создаем приложение для Telegram бота
-application = Application.builder().token(TOKEN).build()
-
-# Функция для обработки команды /start
-async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text("Привет! Я бот для подачи заявки. Заполни форму на сайте.")
-
 # Функция для отправки заявки в группу
-async def send_application_to_group(update: Update, context: CallbackContext, data: dict):
+def send_application_to_group(data):
     # Формируем сообщение с заявкой
     message = f"Новая заявка на вступление:\n"
     message += f"Никнейм: {data['nickname']}\n"
@@ -48,27 +44,7 @@ async def send_application_to_group(update: Update, context: CallbackContext, da
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Отправляем сообщение в группу
-    await application.bot.send_message(chat_id=GROUP_ID, text=message, reply_markup=reply_markup)
-
-# Обработчик нажатий на кнопки (голосование)
-async def button(update: Update, context: CallbackContext):
-    query = update.callback_query
-    await query.answer()
-
-    # Получаем выбранную кнопку
-    action = query.data
-
-    if action == 'accept':
-        response = "Заявка принята!"
-    elif action == 'reject':
-        response = "Заявка отклонена!"
-    
-    # Отправляем сообщение с результатом голосования
-    await query.edit_message_text(text=f"Голосование завершено. {response}")
-
-# Добавляем обработчики команд
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CallbackQueryHandler(button))
+    bot.send_message(chat_id=GROUP_ID, text=message, reply_markup=reply_markup)
 
 # Flask маршруты для сайта
 @app.route('/')
@@ -93,14 +69,11 @@ def submit_form():
     }
 
     # Отправляем заявку в группу
-    application.loop.create_task(send_application_to_group(None, None, data))
+    send_application_to_group(data)
 
     return "Заявка отправлена и ожидает голосования."
 
 if __name__ == '__main__':
-    # Запуск бота в отдельном потоке
-    application.run_polling()
-
-    # Запуск Flask-приложения на правильном порту
+    # Запуск Flask-приложения
     port = int(os.environ.get("PORT", 5000))  # Используем переменную окружения PORT для Render
     app.run(host='0.0.0.0', port=port)
