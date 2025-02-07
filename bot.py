@@ -1,79 +1,88 @@
-import os
-import telebot
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from flask import Flask, render_template, request
 import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils import executor
+from flask import Flask, request
 
-# Включаем логирование
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-logger = logging.getLogger(__name__)
+API_TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Твой токен
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
 
-# Токен для бота и ID группы
-TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Твой токен
-bot = telebot.TeleBot(TOKEN)
-
-# ID твоей группы в Telegram
-GROUP_ID = '-1002428849357'  # ID твоей группы
-
-# Создаем Flask приложение
+# Flask-сервер для обработки данных формы
 app = Flask(__name__)
 
-# Функция для отправки заявки в группу
-def send_application_to_group(data):
-    # Формируем сообщение с заявкой
-    message = f"Новая заявка на вступление:\n"
-    message += f"Никнейм: {data['nickname']}\n"
-    message += f"ПК или Мб: {data['device']}\n"
-    message += f"Сервер: {data['server']}\n"
-    message += f"Редстоун (1-10): {data['redstone']}\n"
-    message += f"ПвП или ПвЕ: {data['pvp_pve']}\n"
-    message += f"Часов в день: {data['playtime']}\n"
-    message += f"Учеба: {data['study']}\n"
-    message += f"Тимейты: {data['teammates']}\n"
-    message += f"Страна: {data['country']}\n"
-    message += f"Возраст: {data['age']}\n"
-    message += f"Интернет: {data['internet']}\n"
-    message += f"Телега/Телефон: {data['contact']}\n"
+# ID твоей группы в Telegram
+GROUP_ID = '-1002428849357'
 
-    # Добавляем кнопки для голосования
-    keyboard = [
-        [InlineKeyboardButton("Принять", callback_data='accept')],
-        [InlineKeyboardButton("Отклонить", callback_data='reject')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Отправляем сообщение в группу
-    bot.send_message(chat_id=GROUP_ID, text=message, reply_markup=reply_markup)
+# Логирование
+logging.basicConfig(level=logging.INFO)
 
-# Flask маршруты для сайта
-@app.route('/')
-def index():
-    return render_template('index.html')
+
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    await message.reply("Привет! Отправь свою заявку через форму на сайте.")
+
 
 @app.route('/submit', methods=['POST'])
 def submit_form():
-    data = {
-        'nickname': request.form['nickname'],
-        'device': request.form['device'],
-        'server': request.form['server'],
-        'redstone': request.form['redstone'],
-        'pvp_pve': request.form['pvp_pve'],
-        'playtime': request.form['playtime'],
-        'study': request.form['study'],
-        'teammates': request.form['teammates'],
-        'country': request.form['country'],
-        'age': request.form['age'],
-        'internet': request.form['internet'],
-        'contact': request.form['contact']
-    }
+    # Получаем данные из формы
+    nickname = request.form.get('nickname')
+    device = request.form.get('device')
+    server = request.form.get('server')
+    redstone = request.form.get('redstone')
+    pvp_pve = request.form.get('pvp_pve')
+    playtime = request.form.get('playtime')
+    study = request.form.get('study')
+    teammates = request.form.get('teammates')
+    country = request.form.get('country')
+    age = request.form.get('age')
+    internet = request.form.get('internet')
+    contact = request.form.get('contact')
 
-    # Отправляем заявку в группу
-    send_application_to_group(data)
+    # Создаем кнопку для голосования
+    keyboard = InlineKeyboardMarkup()
+    button_yes = InlineKeyboardButton("Принять", callback_data="accept")
+    button_no = InlineKeyboardButton("Отклонить", callback_data="reject")
+    keyboard.add(button_yes, button_no)
 
-    return "Заявка отправлена и ожидает голосования."
+    # Отправляем заявку в группу с голосованием
+    bot.send_message(GROUP_ID, f"Новая заявка на вступление:\n"
+                             f"Никнейм: {nickname}\n"
+                             f"ПК/Мб: {device}\n"
+                             f"Сервер: {server}\n"
+                             f"Редстоун: {redstone}\n"
+                             f"ПвП/ПвЕ: {pvp_pve}\n"
+                             f"Часов в день: {playtime}\n"
+                             f"Учеба: {study}\n"
+                             f"Тимейты: {teammates}\n"
+                             f"Страна: {country}\n"
+                             f"Возраст: {age}\n"
+                             f"Интернет: {internet}\n"
+                             f"Контакт: {contact}", reply_markup=keyboard)
+    return "Заявка отправлена!"
+
+
+@dp.callback_query_handler(lambda c: c.data == 'accept')
+async def process_accept(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id, text="Заявка принята!")
+    await bot.send_message(callback_query.from_user.id, "Вы были приняты в команду!")
+
+@dp.callback_query_handler(lambda c: c.data == 'reject')
+async def process_reject(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id, text="Заявка отклонена!")
+    await bot.send_message(callback_query.from_user.id, "Ваша заявка отклонена.")
+
 
 if __name__ == '__main__':
-    # Запуск Flask-приложения
-    port = int(os.environ.get("PORT", 5000))  # Используем переменную окружения PORT для Render
-    app.run(host='0.0.0.0', port=port)
+    # Запуск Flask приложения
+    from threading import Thread
+
+    def run_flask():
+        app.run(host='0.0.0.0', port=5000)
+
+    thread = Thread(target=run_flask)
+    thread.start()
+
+    # Запуск бота
+    executor.start_polling(dp, skip_updates=True)
