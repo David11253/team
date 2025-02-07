@@ -1,7 +1,7 @@
 import logging
+import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils import executor
 from flask import Flask, request
 
 API_TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Твой токен
@@ -14,15 +14,12 @@ app = Flask(__name__)
 # ID твоей группы в Telegram
 GROUP_ID = '-1002428849357'
 
-
 # Логирование
 logging.basicConfig(level=logging.INFO)
-
 
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     await message.reply("Привет! Отправь свою заявку через форму на сайте.")
-
 
 @app.route('/submit', methods=['POST'])
 def submit_form():
@@ -62,7 +59,6 @@ def submit_form():
                              f"Контакт: {contact}", reply_markup=keyboard)
     return "Заявка отправлена!"
 
-
 @dp.callback_query_handler(lambda c: c.data == 'accept')
 async def process_accept(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id, text="Заявка принята!")
@@ -73,9 +69,8 @@ async def process_reject(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id, text="Заявка отклонена!")
     await bot.send_message(callback_query.from_user.id, "Ваша заявка отклонена.")
 
-
-if __name__ == '__main__':
-    # Запуск Flask приложения
+async def on_start():
+    # Запуск Flask приложения в отдельном потоке
     from threading import Thread
 
     def run_flask():
@@ -85,4 +80,8 @@ if __name__ == '__main__':
     thread.start()
 
     # Запуск бота
-    executor.start_polling(dp, skip_updates=True)
+    await dp.start_polling()
+
+if __name__ == '__main__':
+    # Запуск через asyncio
+    asyncio.run(on_start())
