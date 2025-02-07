@@ -1,4 +1,6 @@
-import telebot
+from telegram import Bot
+from telegram.ext import CommandHandler, Updater
+
 from flask import Flask, request
 
 TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Твой токен
