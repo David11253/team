@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заявка на вступление</title>
+</head>
+<body>
+  <h1>Заявка на вступление</h1>
+  <form action="/submit_form" method="POST">
+    <label for="nickname">Никнейм:</label>
+    <input type="text" id="nickname" name="nickname" required>
+
+    <label for="device">ПК или Мб:</label>
+    <select id="device" name="device" required>
+      <option value="ПК">ПК</option>
+      <option value="Мб">Мобильный</option>
+    </select>
+
+    <label for="server">На каком сервере играете:</label>
+    <input type="text" id="server" name="server" required>
+
+    <label for="redstone">Хорошо понимаете Редстоун (1-10):</label>
+    <input type="number" id="redstone" name="redstone" min="1" max="10" required>
+
+    <label for="playstyle">ПвП или ПвЕ:</label>
+    <select id="playstyle" name="playstyle" required>
+      <option value="ПвП">ПвП</option>
+      <option value="ПвЕ">ПвЕ</option>
+    </select>
+
+    <label for="playtime">Сколько в день часов примерно играете:</label>
+    <input type="number" id="playtime" name="playtime" required>
+
+    <label for="study">Со скольки у вас учеба/в какое время вы не можете играть?</label>
+    <input type="text" id="study" name="study" value="8:00-13:00" required>
+
+    <label for="teammates">Есть ли у вас свои тимейты:</label>
+    <input type="text" id="teammates" name="teammates" placeholder="Нет или ник Тима" required>
+
+    <label for="country">В какой стране вы живёте:</label>
+    <input type="text" id="country" name="country" required>
+
+    <label for="age">Сколько вам лет:</label>
+    <input type="number" id="age" name="age" required>
+
+    <label for="internet">Какой у вас интернет (от 1 до 10):</label>
+    <input type="number" id="internet" name="internet" min="1" max="10" required>
+
+    <label for="contact">Ваш ТГ или номер телефона:</label>
+    <input type="text" id="contact" name="contact" required>
+
+    <button type="submit">Отправить заявку</button>
+  </form>
+</body>
+</html>
