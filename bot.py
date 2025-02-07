@@ -1,24 +1,22 @@
 from telegram import Bot
-from telegram.ext import CommandHandler, Updater
+from telegram.ext import CommandHandler, Application
 import os
-from flask import Flask, request
+from flask import Flask
 
 TOKEN = '7705095327:AAGTdo2oXWMACVl8cufB-gYzDNzD4UxTUiU'  # Твой токен
-bot = Bot(TOKEN)
 
 app = Flask(__name__)
 
 # Команда /start для бота
-def start(update, context):
-    update.message.reply_text("Привет, я твой бот!")
+async def start(update, context):
+    await update.message.reply_text("Привет, я твой бот!")
 
-# Инициализация Updater и Dispatcher
-updater = Updater(TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+# Создаем приложение
+application = Application.builder().token(TOKEN).build()
 
 # Добавление обработчика команды
 start_handler = CommandHandler('start', start)
-dispatcher.add_handler(start_handler)
+application.add_handler(start_handler)
 
 # Flask-сервер
 @app.route('/')
@@ -26,5 +24,5 @@ def index():
     return "Hello, world!"
 
 if __name__ == '__main__':
-    updater.start_polling()
+    application.run_polling()
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
